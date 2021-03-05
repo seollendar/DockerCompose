@@ -1,0 +1,12 @@
+version: "3.8"
+
+
+services:
+    preproc1:
+        image: seol0keti/ubuntu-preprocessing:1
+        container_name: preproc1
+
+    preproc2:
+        image: seol0keti/ubuntu-preprocessing:1
+        container_name: preproc2
+            

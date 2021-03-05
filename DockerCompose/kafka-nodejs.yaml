@@ -1,0 +1,123 @@
+version: "3"
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper:3.4.6
+    container_name: kafka-nodejs-example-zookeeper
+    ports:
+      - 2181:2181
+  kafka:
+    image: wurstmeister/kafka:2.13-2.6.0
+    container_name: kafka-nodejs-example-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    ports:
+      - 9092:9092
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  database:
+    image: postgres:10.4-alpine
+    container_name: kafka-nodejs-example-database
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - 8000:5432
+    volumes:
+      - ./services/database/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./services/database/seed.sql:/docker-entrypoint-initdb.d/2-seed.sql
+  producer:
+    build: ./services/producer
+    container_name: kafka-nodejs-example-producer
+    command: sh -c "dockerize -wait tcp://zookeeper:2181 -wait tcp://kafka:9092 -wait tcp://database:5432 npm start"
+    depends_on:
+      - zookeeper
+      - kafka
+      - database
+    environment:
+      PGHOST: database
+      PGPORT: 5432
+      PGUSER: ${POSTGRES_USER}
+      PGDATABASE: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PRODUCER_PORT: ${PRODUCER_PORT}
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    ports:
+      - ${PRODUCER_PORT}:${PRODUCER_PORT}
+  consumer:
+    build: ./services/consumer
+    container_name: kafka-nodejs-example-consumer
+    command: sh -c "dockerize -wait tcp://zookeeper:2181 -wait tcp://kafka:9092 -wait tcp://database:5432 npm start"
+    depends_on:
+      - zookeeper
+      - kafka
+      - database
+    environment:
+      PGHOST: database
+      PGPORT: 5432
+      PGUSER: ${POSTGRES_USER}
+      PGDATABASE: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+
+# version: '2'
+# # expose: 다른 컨테이너에게 포트 open
+
+# services:
+#     zookeeper:
+#         image: wurstmeister/zookeeper:3.4.6
+#         container_name: zookeeper
+#         ports:
+#             - "2181:2181"
+#         expose:     
+#         - "2181"
+
+#     kafka:
+#         image: wurstmeister/kafka:2.13-2.6.0
+#         container_name: kafka
+#         environment:
+#             KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+#             KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+#             KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+#             KAFKA_ADVERTISED_PORT: 9092
+#             KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#             #KAFKA_CREATE_TOPICS: "javainuse-topic:1:1"   # Topic명:Partition개수:Replica개수
+#         volumes:
+#             - /var/run/docker.sock:/var/run/docker.sock
+#         ports:
+#             - "9092:9092"
+#         depends_on:
+#             - zookeeper
+#         expose:
+#         - "9092"
+
+#     nodejs:
+#         image: 
+#         container_name: node-kafka-emulator
+        
+
+version: '3'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    ports:
+      - "32181:32181"
+
+  kafka0:
+    image: confluentinc/cp-kafka:latest
+    ports:
+     - "9090:9090"
+    depends_on:
+      - zookeeper
+    #expose
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:32181
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_INTERNAL://kafka0:29090,LISTENER_EXTERNAL://localhost:9090
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_INTERNAL:PLAINTEXT,LISTENER_EXTERNAL:PLAINTEXT
+      # KAFKA_LISTENERS: LISTENER_INTERNAL://0.0.0.0:29090,LISTENER_EXTERNAL://0.0.0.0:9090
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_INTERNAL
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"

@@ -1,0 +1,83 @@
+* java
+* Docker 데이터 분석? typescript 딥러닝
+
+*docker 공유프레젠테이션
+https://docs.google.com/presentation/d/1TJqhTdeBRh75WnHpDBPogT6QpLq9-wYah4j7DueyKqc/edit
+*container간 네트워크
+https://anomie7.tistory.com/46
+
+
+* (kafka) docker-compose
+1 zookeeper : n kafka
+컨테이너 여러개 실행
+
+* docker-compose:  preproc jar여러개 실행 - dockerfile 실행 
+* dockerfile 작성: 카프카 실행중인 상태에서  preproc.jar 실행하도록
+
+>카프카여러개 != 컨슈머 여러개 
+>컨슈머 그룹내 컨슈머 여러개 != 컨슈머 그룹 여러개
+>컨슈머 그룹 | 컨슈머 여러개 에서 오프셋이 어떻게 되는지 확인
+>카프카스트림즈
+
+* java class 동시에 실행
+- ant사용
+https://kamang-it.tistory.com/entry/Ant%EC%9E%90%EB%B0%94%ED%8C%8C%EC%9D%BC-%EC%97%AC%EB%9F%AC%EA%B0%9C-%EC%BB%B4%ED%8C%8C%EC%9D%BC%ED%95%98%EA%B3%A0-%EC%8B%A4%ED%96%896
+
+- 하나의 jar 파일에서 여러 main class 선택적 실행하기
+https://m.blog.naver.com/PostView.nhn?blogId=cestlavie_01&logNo=40202055474&proxyReferer=https:%2F%2Fwww.google.com%2F
+
+===============
+ㅇ 정량적 목표: (2초) 10만개의 데이터를 분산하여 전처리. 
+(consumer 그룹 내 offset 조절? 프로듀서가 카프카로 데이터를 보낼 때 키와 파티션을 지정해서 입력 가능)
+- 1토픽의 10만개 데이터를 갖고 있는 상태에서 전처리해야 함 
+- offset을 숫자로 줄 수 없음 (earlist, latest, none) 
+- 5만개씩 분산처리 issue: 연속되는 위치데이터를 분산처리하여 연속성이 끊어지는 상황발생
+>>현재 issue
+       > 메시지 순서를 정확하게 유지하려면, 토픽의 파티션 수를 하나로 사용해야 한다. 
+       > 파티션 수보다 컨슈머 그룹의 인스턴스 수가 많을 수 없다
+       > 파티션 하나당 하나의 컨슈머 인스턴스가 연결되기 때문에, 연결되지 않은  컨슈머 인스턴스는                 일을 하지 못하고 대기 상태가 된다
+
+
+ㅇ 기술목표: 전처리 시나리오 개수 증가 (consumer 여러개 실행) 
+- 저장은 어떤식으로 무엇에 저장할 것인지? 
+   redis? mongoDB? 매번 저장할 것인지 모아놨다가 한번에 저장할 것인지 다름
+===============
+
+ㅇ카프카 키 파티셔너
+프로듀서가 카프카로 데이터를 보낼 때 키와 파티션을 지정해서 입력할 수 있다.  ==>실행해볼 필요가 있음
+
+ㅇ도커의 카프카에 파티션이나 그룹 토픽 검색
+ㅇ도커컴포즈로 전처리 실행, 후에 다른 것도 추가 연결할 수 있는기능
+ㅇ링크연결하기
+1. 도커컴포즈로 실행한 카프카에 노드연결해서 데이터 넣어보기 O
+2. 주키퍼랑 카프카를 따로 실행하여 연결하기
+(도커파일 작성해서 ubuntu실행하여 nodejs, jar파일 넣)
+
+
+ㅇ 파일명이 docker-compose가 아닐 때 
+- docker-compose -f 파일명.ymal up
+
+ㅇdocker-compose 일괄실행
+- docker-compose up
+  > -d옵션을 사용하지 않으면 현재 터미널에 컨테이터 로그가 출력, ctrl+c를 눌러서 탈출하는 순간 모든 컨테이너 정지 
+* 백그라운드 실행
+ - docker-compose up -d
+ㅇ 정지
+- docker-compose down
+ㅇ 특정 컨테이너 올리기. 
+- docker-compose start 컨테이너명
+ㅇ 특정 컨테ㅔ이너 정지
+- docker-compose stop 컨테이너명
+참고: https://www.daleseo.com/docker-compose/
+
+ㅇ docker-compose로 각각만들어놓은 이미지 실행
+because: 일괄실행이 아닌 각각 실행에서 주소가 안맞는지 데이터 카프카와 연결이 안됨
+- dockerfile실행? container 실행 후 app.js 돌도록 //꼭 필요한 작업 같지는 않음 kafka와 연결이 목표
+- container 실행 순서 맞추기
+
+ㅇ kafka container - other container connect 참고 
+https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
+https://github.com/wurstmeister/kafka-docker/issues/575
+
+ㅇ2021-01-26
+Dockerfile? docker-compose로 jar 파일 여러개 한번에 실행해서 log 파일 확인하기(여러개 시나리오 돌릴 수 있도록)

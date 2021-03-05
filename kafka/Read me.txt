@@ -1,0 +1,20 @@
+1. zookeeper실행
+PS C:\kafka_2.13-2.6.0\bin\windows> .\zookeeper-server-start.bat C:\kafka_2.13-2.6.0\config\zookeeper.properties
+
+2.kafka-server실행
+PS C:\kafka_2.13-2.6.0\bin\windows> .\kafka-server-start.bat C:\kafka_2.13-2.6.0\config\server.properties
+
+
+ㅇKafka Server 설정 변경
+- config\server.properties 수정
+# Broker가 사용하는 호스트와 포트를 지정, 형식은 PLAINTEXT://your.host.name:port 을 사용
+listeners=PLAINTEXT://localhost:9092
+
+# 주키퍼의 접속 정보.
+zookeeper.connect=localhost:2181
+
+
+ㅇTopic 
+-Kafka가 실행 되었으면, Producer와 Consumer가 사용 할 Topic을 생성
+PS C:\kafka_2.13-2.6.0\bin\windows> .\kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic preprocessing
+

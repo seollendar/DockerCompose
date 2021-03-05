@@ -1,0 +1,15 @@
+FROM ubuntu
+
+RUN command
+
+COPY ./code ./
+CMD [ "cd", "kafka_2.13-2.6.0" ]
+
+
+apt-get install wget
+apt-get install openjdk-11-jdk
+wget http://www-us.apache.org/dist/kafka/2.6.0/kafka_2.13-2.6.0.tgz
+tar -zxf kafka_2.13-2.6.0.tgz
+cd kafka_2.13-2.6.0
+bin/zookeeper-server-start.sh -daemon config/zookeeper.properties
+bin/kafka-server-start.sh -daemon config/server.properties
